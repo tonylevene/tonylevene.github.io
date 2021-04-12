@@ -141,8 +141,16 @@ var light = addPoly(svg, '150,140 250,280 50,280', 'darkblue');
 var bulb = addCircle(svg, 151, 148, 25, 'black');
 
 // man
-var man = addStickMan(svg, 100, 170, 50, 100, 'black');
+var man = addStickMan(svg, 100, 220, 35, 70, 'black');
 d3.selectAll("#sman").transition().duration(2000).attr('opacity',0.0);   
+var trx = 0;
+
+var msg = svg.append("text")
+    .attr("x", 125)
+    .attr("y", 225)
+    .attr("dy", ".30em")
+    .text('Welcome!')
+    .attr('opacity', 0.0);
 
 // switch action
 var switchIsOn = false;
@@ -170,7 +178,10 @@ function switchOn() {
 
    d3.selectAll("#sman")
       .transition().duration(1000)
-      .attr('opacity',1.0);
+      .attr('opacity',1.0).attr('transform', 'translate(0 0)');
+
+   msg.transition().duration(1500)
+      .attr('opacity', 1.0);
 }
 
 function switchOff() { 
@@ -190,12 +201,18 @@ function switchOff() {
       .attr('fill', 'darkblue')
       .ease(d3.easeExp);
 
-   d3.selectAll("#sman")
-      .transition().duration(500)
-      .attr('opacity',0.0); 
+   msg.transition().duration(300)
+      .attr('opacity', 0.0);
+   let sm = d3.selectAll("#sman");
+   sm.transition().duration(150)
+      .attr('stroke','black')
+      .attr('opacity',0.0)
+      delay(1000).attr('transform', 'translate(0 0)');
 } 
 
 sw.on('click', () => {
+   trx = 0;
+
    if (switchIsOn) { 
       switchOff(); 
    } else { 
@@ -206,10 +223,11 @@ sw.on('click', () => {
 
 bg.on('click', () => {
    //let mHead = d3.selectAll("circle#sman");
+  trx += 30;
    let sm = d3.selectAll("#sman");
 
    sm.transition().duration(500)
-      .attr('stroke','purple'); 
+      .attr('stroke','purple').transition().duration(500).attr('transform', `translate(${trx} 0)`);
 });
 
 </script>

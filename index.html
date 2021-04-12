@@ -1,1 +1,217 @@
-Hello World!
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+<script type = "text/javascript" src = "https://d3js.org/d3.v6.min.js"></script>
+      <style>
+         body { font-family: Arial; }
+      </style>
+</head>
+<body>
+<div id = "svgcontainer"></div>
+<script language = "javascript">    
+var width = 300;       
+var height = 300;
+
+// ----- Helpers -----
+
+function addRect(ctx, x, y, w, h, c, atts) {
+   let obj = ctx.append('rect')
+          .attr('x', x)
+          .attr('y', y)
+          .attr('width', w) 
+          .attr('height', h)
+          .attr('fill', c);
+   if (atts) {
+      for (att of atts) {
+         obj.attr(...att);
+      }
+   }
+   return obj;
+}
+
+function addCircle(ctx, cx, cy, r, c, atts) {
+   let obj = ctx.append('circle')
+             .attr('cx', cx)
+             .attr('cy', cy)
+             .attr('r', r) 
+             .attr('fill', c);
+   if (atts) {
+      for (att of atts) {
+         obj.attr(...att);
+      }
+   }
+   return obj;
+}
+
+function addPoly(ctx, points, c, atts) {
+   let obj = ctx.append('polygon')
+             .attr('points', points)
+             .attr('fill', c);
+   if (atts) {
+      for (att of atts) {
+         obj.attr(...att);
+      }
+   }
+   return obj;
+}
+
+function addLine(ctx, x1, y1, x2, y2, c, atts) {
+   let obj =ctx.append('line')
+             .attr('stroke', c)
+             .attr('x1',x1)
+             .attr('y1',y1)
+             .attr('x2',x2)
+             .attr('y2',y2);
+   if (atts) {
+      for (att of atts) {
+         obj.attr(...att);
+      }
+   }
+   return obj;
+}
+
+function addStickMan(ctx, x, y, w, h, c='black', atts) {
+   var g = ctx.append('svg:g')
+              .attr('id','sman');
+
+   addCircle(g, x, y, 1+w*0.4, c, 
+      [
+         ['stroke', c],
+         ['stroke-width',2],
+         ['fill-opacity',0.0],
+         ['id','sman']
+      ]);
+   addLine(g, x, y+w*0.4, x, y+w*0.4+h*0.35, c, [['stroke-width',2],
+         ['id','sman']]);
+   addLine(g, x, y-1+w*0.4+h*0.35, x-w/2,y+h,c, [['stroke-width',2],
+         ['id','sman']]);
+   addLine(g, x, y-1+w*0.4+h*0.35, x+w/2,y+h,c, [['stroke-width',2],
+         ['id','sman']]);
+addLine(g, x, y-1+w*0.4+h*0.25, x-w/2,y+0.2*h,c, [['stroke-width',2],
+         ['id','sman']]);
+   addLine(g, x, y-1+w*0.4+h*0.25, x+w/2,y+0.2*h,c, [['stroke-width',2],
+         ['id','sman']]);
+
+   if (atts) {
+      for (att of atts) {
+         g.attr(...att);
+      }
+   }
+
+   return g;
+}
+
+// ----- Main -----
+
+var svg = d3.select("#svgcontainer")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+// background
+var bg = addRect(svg, 0, 0, 300, 300, 'darkblue');
+
+// switch
+addRect(svg, 218, 48, 29, 54, 'white');
+addRect(svg, 220, 50, 25, 50, 'darkgrey');
+var sw = addRect(svg, 220, 50, 25, 25, 'lightgrey');
+var swLine = addRect(svg, 220, 55, 25, 2, 'darkgrey');
+
+// cord
+addRect(svg, 149, 10, 3, 90, 'darkgrey');
+
+// holder
+for (let i=0; i<4; i++) {
+   addRect(svg, 141, 100+(6*i), 20, 4, 'white', 
+      [
+         ['stroke','lightgrey'],
+         ['stroke-width',1]
+      ]
+   );
+}
+
+// light cast by bulb
+var light = addPoly(svg, '150,140 250,280 50,280', 'darkblue');
+
+// bulb
+var bulb = addCircle(svg, 151, 148, 25, 'black');
+
+// man
+var man = addStickMan(svg, 100, 170, 50, 100, 'black');
+d3.selectAll("#sman").transition().duration(2000).attr('opacity',0.0);   
+
+// switch action
+var switchIsOn = false;
+
+function switchOn() { 
+   light
+      .transition().duration(800)
+      .attr('fill', 'rgb(255,255,237)')
+      .ease(d3.easeExp);
+ 
+   bulb
+      .transition().duration(500)
+      .attr('fill', 'yellow')
+      .ease(d3.easeExp); 
+
+   sw.transition().duration(500)
+      .attr('y',75).ease(d3.easeExp);
+   swLine.transition().duration(500)
+      .attr('y',93).ease(d3.easeExp);
+
+   bg
+      .transition().duration(800)
+      .attr('fill', 'blue')
+      .ease(d3.easeExp);
+
+   d3.selectAll("#sman")
+      .transition().duration(1000)
+      .attr('opacity',1.0);
+}
+
+function switchOff() { 
+   bulb.transition().duration(800)
+      .attr('fill', 'black')
+      .ease(d3.easeExp);
+   light.transition().duration(1000)
+      .attr('fill','darkblue')
+      .ease(d3.easeExp);
+
+   sw.transition().duration(500)
+      .attr('y',50).ease(d3.easeExp);
+   swLine.transition().duration(500)
+      .attr('y',55).ease(d3.easeExp);
+
+   bg.transition().duration(800)
+      .attr('fill', 'darkblue')
+      .ease(d3.easeExp);
+
+   d3.selectAll("#sman")
+      .transition().duration(500)
+      .attr('opacity',0.0); 
+} 
+
+sw.on('click', () => {
+   if (switchIsOn) { 
+      switchOff(); 
+   } else { 
+      switchOn(); 
+   }
+   switchIsOn = !switchIsOn;
+});
+
+bg.on('click', () => {
+   let mHead = d3.selectAll("circle#sman");
+
+   mHead.transition().duration(500)
+      .attr('stroke','purple'); 
+});
+
+</script>
+</body>
+</html>
+
+

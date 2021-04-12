@@ -205,9 +205,10 @@ sw.on('click', () => {
 });
 
 bg.on('click', () => {
-   let mHead = d3.selectAll("circle#sman");
+   //let mHead = d3.selectAll("circle#sman");
+   let sm = d3.selectAll("#sman");
 
-   mHead.transition().duration(500)
+   sm.transition().duration(500)
       .attr('stroke','purple'); 
 });
 

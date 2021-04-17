@@ -61,26 +61,25 @@ Game.load = function () {
 };
 
 Game.init = function () {
+   this.startX = undefined;
+   this.startY = undefined;
+   const dNONE = 0;
+   const dLEFT = 1;
+   const dRIGHT = 2;
+   const dUP = 3;
+   const dDOWN = 4;
+   this.directionX = dNONE; 
+   this.directionY = dNONE; 
+
     Keyboard.listenForEvents(
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
-var el = document;//.getElementsByTagName("canvas")[0];
+var el = body;//.getElementsByTagName("canvas")[0];
 el.addEventListener("touchstart", handleStart);
-//el.addEventListener("touchmove", handleMove);
 el.addEventListener("touchend", handleEnd);
-//el.addEventListener("touchcancel", handleCancel);
     this.tileAtlas = Loader.getImage('tiles');
     this.camera = new Camera(map, 512, 512);
 };
  
-var startX = undefined;
-var startY = undefined;
-const dNONE = 0;
-const dLEFT = 1;
-const dRIGHT = 2;
-const dUP = 3;
-const dDOWN = 4;
-var directionX = dNONE; 
-var directionY = dNONE; 
 
 function handleStart(e) {
   // startX = e.touches[0].clientX;

@@ -63,7 +63,7 @@ Game.load = function () {
 Game.init = function () {
     Keyboard.listenForEvents(
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
-var el = document.getElementsByTagName("canvas")[0];
+var el = document;//.getElementsByTagName("canvas")[0];
 el.addEventListener("touchstart", handleStart);
 //el.addEventListener("touchmove", handleMove);
 el.addEventListener("touchend", handleEnd);
@@ -83,28 +83,28 @@ var directionX = dNONE;
 var directionY = dNONE; 
 
 function handleStart(e) {
-   startX = e.touches[0].clientX;
-   startY = e.touches[0].clientY;
+  // startX = e.touches[0].clientX;
+   //startY = e.touches[0].clientY;
 }
 
 function handleEnd(e) {
-   if (e.changedTouches[0].clientX - startX > 5) {
-      directionX = dRIGHT;
-   }
-   if (e.changedTouches[0].clientX - startX < -5) {
-      directionX = dLEFT;
-   }
-   if (e.changedTouches[0].clientY - startY > 5) {
-      directionY = dDOWN;
-   }
-   if (e.changedTouches[0].clientY - startY < -5) {
-      directionX = dUP;
-   }
-
-   startX = undefined;
-   startY = undefined;
-   directionX = dNONE; 
-   directionY = dNONE; 
+  // if (e.changedTouches[0].clientX - startX > 5) {
+      //directionX = dRIGHT;
+   //}
+   //if (e.changedTouches[0].clientX - startX < -5) {
+      //directionX = dLEFT;
+   //}
+   //if (e.changedTouches[0].clientY - startY > 5) {
+      //directionY = dDOWN;
+   //}
+   //if (e.changedTouches[0].clientY - startY < -5) {
+      //directionX = dUP;
+   //}
+//
+   //startX = undefined;
+   //startY = undefined;
+   //directionX = dNONE; 
+   //directionY = dNONE; 
 }
 
 

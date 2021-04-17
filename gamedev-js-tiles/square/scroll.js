@@ -63,18 +63,59 @@ Game.load = function () {
 Game.init = function () {
     Keyboard.listenForEvents(
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
+var el = document.getElementsByTagName("canvas")[0];
+el.addEventListener("touchstart", handleStart);
+//el.addEventListener("touchmove", handleMove);
+el.addEventListener("touchend", handleEnd);
+//el.addEventListener("touchcancel", handleCancel);
     this.tileAtlas = Loader.getImage('tiles');
     this.camera = new Camera(map, 512, 512);
 };
+ 
+var startX = undefined;
+var startY = undefined;
+const dNONE = 0;
+const dLEFT = 1;
+const dRIGHT = 2;
+const dUP = 3;
+const dDOWN = 4;
+var directionX = dNONE; 
+var directionY = dNONE; 
+
+function handleStart(e) {
+   startX = e.touches[0].clientX;
+   startY = e.touches[0].clientY;
+}
+
+function handleEnd(e) {
+   if (e.changedTouches[0].clientX - startX > 5) {
+      directionX = dRIGHT;
+   }
+   if (e.changedTouches[0].clientX - startX < -5) {
+      directionX = dLEFT;
+   }
+   if (e.changedTouches[0].clientY - startY > 5) {
+      directionY = dDOWN;
+   }
+   if (e.changedTouches[0].clientY - startY < -5) {
+      directionX = dUP;
+   }
+
+   startX = undefined;
+   startY = undefined;
+   directionX = dNONE; 
+   directionY = dNONE; 
+}
+
 
 Game.update = function (delta) {
     // handle camera movement with arrow keys
     var dirx = 0;
     var diry = 0;
-    if (Keyboard.isDown(Keyboard.LEFT)) { dirx = -1; }
-    if (Keyboard.isDown(Keyboard.RIGHT)) { dirx = 1; }
-    if (Keyboard.isDown(Keyboard.UP)) { diry = -1; }
-    if (Keyboard.isDown(Keyboard.DOWN)) { diry = 1; }
+    if (Keyboard.isDown(Keyboard.LEFT) || directionX  === dLEFT) { dirx = -1; }
+    if (Keyboard.isDown(Keyboard.RIGHT)) || directionX  === dRIGHT { dirx = 1; }
+    if (Keyboard.isDown(Keyboard.UP) || directionY === dUP) { diry = -1; }
+    if (Keyboard.isDown(Keyboard.DOWN) || directionY === dDOWN) { diry = 1; }
 
     this.camera.move(delta, dirx, diry);
 };

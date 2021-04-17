@@ -113,7 +113,7 @@ Game.update = function (delta) {
     var dirx = 0;
     var diry = 0;
     if (Keyboard.isDown(Keyboard.LEFT) || directionX  === dLEFT) { dirx = -1; }
-    if (Keyboard.isDown(Keyboard.RIGHT)) || directionX  === dRIGHT { dirx = 1; }
+    if (Keyboard.isDown(Keyboard.RIGHT)) || directionX  === dRIGHT) { dirx = 1; }
     if (Keyboard.isDown(Keyboard.UP) || directionY === dUP) { diry = -1; }
     if (Keyboard.isDown(Keyboard.DOWN) || directionY === dDOWN) { diry = 1; }
 

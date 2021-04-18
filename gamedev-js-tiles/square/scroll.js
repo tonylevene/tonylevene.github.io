@@ -60,22 +60,23 @@ Game.load = function () {
     ];
 };
 
-Game.init = function () {
-   this.startX = undefined;
-   this.startY = undefined;
    const dNONE = 0;
    const dLEFT = 1;
    const dRIGHT = 2;
    const dUP = 3;
    const dDOWN = 4;
+
+Game.init = function () {
+   this.startX = undefined;
+   this.startY = undefined;
    this.directionX = dNONE; 
    this.directionY = dNONE; 
 
     Keyboard.listenForEvents(
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
-var el = body;//.getElementsByTagName("canvas")[0];
-el.addEventListener("touchstart", handleStart);
-el.addEventListener("touchend", handleEnd);
+    let el = document.getElementsByTagName("canvas")[0];
+    el.addEventListener("touchstart", handleStart);
+    el.addEventListener("touchend", handleEnd);
     this.tileAtlas = Loader.getImage('tiles');
     this.camera = new Camera(map, 512, 512);
 };

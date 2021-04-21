@@ -396,10 +396,8 @@ Hero.prototype._collide = function (dirx, diry) {
     var collR = collRT && collRB;
     var collT = collLT && collRT;
     var collB = collLB && collRB;
-        //this.map.isSolidTileAtXY(left, top) ||
-        //this.map.isSolidTileAtXY(right, top) ||
-        //this.map.isSolidTileAtXY(right, bottom) ||
-        //this.map.isSolidTileAtXY(left, bottom);
+
+    var adjusted = false;
     if (!collision) { 
        document.getElementById("status").innerHTML = "";
           return; 
@@ -410,19 +408,27 @@ Hero.prototype._collide = function (dirx, diry) {
     if (collB && diry > 0) {
         row = this.map.getRow(bottom);
         this.y = -this.height / 2 + this.map.getY(row);
+          adjusted = true;
     }
     else if (collT && diry < 0) {
         row = this.map.getRow(top);
         this.y = this.height / 2 + this.map.getY(row + 1);
+          adjusted = true;
     }
    if (collR && dirx > 0) {
         col = this.map.getCol(right);
         this.x = -this.width / 2 + this.map.getX(col);
+          adjusted = true;
     }
     else if (collL && dirx < 0) {
         col = this.map.getCol(left);
         this.x = this.width / 2 + this.map.getX(col + 1);
+          adjusted = true;
     }
+      if (!adjusted) {
+            // one corner of hero colliding
+            // todo
+      }
 
 };
 

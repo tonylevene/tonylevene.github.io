@@ -4,11 +4,11 @@
 </head>
 <body>
 <div>
-<canvas id="demo" width="512" height="512"></canvas>
+<canvas id="demo" width="384" height="384"></canvas>
 </div>
-
+<div id="status"></div>
+<button type="button" onclick="toggleGrid()">Toggle Grid</button>
 <script>
-
 //
 // Asset loader
 //
@@ -95,9 +95,9 @@ TouchScreen.NONE = 0;
 TouchScreen._directions = {};
 
 TouchScreen.listenForEvents = function (directions) {
-    window.addEventListener('touchstart', this._onTouchStart.bind(this));
-    window.addEventListener('touchmove', this._onTouchMove.bind(this));
-    window.addEventListener('touchend', this._onTouchEnd.bind(this));
+    window.addEventListener('touchstart', this._onTouchStart.bind(this), {passive: false});
+    window.addEventListener('touchmove', this._onTouchMove.bind(this), {passive: false});
+    window.addEventListener('touchend', this._onTouchEnd.bind(this), {passive: false});
 
     directions.forEach(function (direction) {
         this._directions[direction] = false;
@@ -107,25 +107,30 @@ TouchScreen.listenForEvents = function (directions) {
 TouchScreen._onTouchStart = function (event) {
     TouchScreen_startX = event.touches[0].clientX;
     TouchScreen_startY = event.touches[0].clientY;
+    if ((0 <= Touchscreen_startX < Game.width) && 
+          (0 <= Touchscreen_startY < Game.height)) { 
+        //event.preventDefault();
+    }
 };
 
 TouchScreen._onTouchMove = function (event) {
-    if (event.changedTouches[0].clientX - TouchScreen_startX > 5)    {
+    event.preventDefault();
+    if (event.changedTouches[0].clientX - TouchScreen_startX > 3)    {
       this._directions[TouchScreen.RIGHT] = true;
     } else {
       this._directions[TouchScreen.RIGHT] = false;
     }
-    if (event.changedTouches[0].clientX - TouchScreen_startX < -5) {
+    if (event.changedTouches[0].clientX - TouchScreen_startX < -3) {
       this._directions[TouchScreen.LEFT] = true;
     } else {
       this._directions[TouchScreen.LEFT] = false;
     }
-    if (event.changedTouches[0].clientY - TouchScreen_startY > 5) {
+    if (event.changedTouches[0].clientY - TouchScreen_startY > 3) {
       this._directions[TouchScreen.DOWN] = true;
     } else {
       this._directions[TouchScreen.DOWN] = false;
     }
-    if (event.changedTouches[0].clientY - TouchScreen_startY < -5) {
+    if (event.changedTouches[0].clientY - TouchScreen_startY < -3) {
       this._directions[TouchScreen.UP] = true;
     } else {
       this._directions[TouchScreen.UP] = false;
@@ -133,6 +138,7 @@ TouchScreen._onTouchMove = function (event) {
 };
 
 TouchScreen._onTouchEnd = function (event) {
+      //event.preventDefault();
       this._directions[TouchScreen.LEFT] = false;
       this._directions[TouchScreen.RIGHT] = false;
       this._directions[TouchScreen.DOWN] = false;
@@ -152,9 +158,11 @@ TouchScreen.isAiming = function (direction) {
 
 var Game = {};
 
-Game.run = function (context) {
+Game.run = function (context, width, height) {
     this.ctx = context;
     this._previousElapsed = 0;
+      this.width = width;
+      this.height = height;
 
     var p = this.load();
     Promise.all(p).then(function (loaded) {
@@ -167,7 +175,7 @@ Game.tick = function (elapsed) {
     window.requestAnimationFrame(this.tick);
 
     // clear previous frame
-    this.ctx.clearRect(0, 0, 512, 512);
+    this.ctx.clearRect(0, 0, Game.width, Game.height);
 
     // compute delta time in seconds -- also cap it
     var delta = (elapsed - this._previousElapsed) / 1000.0;
@@ -183,43 +191,99 @@ Game.tick = function (elapsed) {
 //
 
 window.onload = function () {
-    var context = document.getElementById('demo').getContext('2d');
-    Game.run(context);
+    var canvas = document.getElementById('demo');
+    var context = canvas.getContext('2d');
+
+    Game.run(context, canvas.width, canvas.height);
 };
 
 var map = {
-    cols: 12,
-    rows: 12,
-    tsize: 64,
+    cols: 16,
+    rows: 16,
+    tsize: 32,
     layers: [[
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 3,
-        3, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 3,
-        3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 3, 3
+760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+        760, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 711, 760,
+760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 760, 
     ], [
-        4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        4, 4, 4, 0, 5, 4, 4, 4, 4, 4, 4, 4,
-        4, 4, 4, 0, 0, 3, 3, 3, 3, 3, 3, 3
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, 792, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
     ]],
+      solid: [
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+    ],
     getTile: function (layer, col, row) {
         return this.layers[layer][row * map.cols + col];
+    },
+    isSolidTileAtXY2: function (x, y) {
+        var col = Math.floor(x / this.tsize);
+        var row = Math.floor(y / this.tsize);
+        // tiles 2 and 4 are solid -- the rest are walkable
+        // loop through all layers and return TRUE if any tile is solid
+        return this.layers.reduce(function (res, layer, index) {
+            var tile = this.getTile(index, col, row);
+            var isSolid = tile === 2 || tile === 4;
+            return res || isSolid;
+        }.bind(this), false);
+    },
+      isSolidTileAtXY: function (x, y) {
+        var col = Math.floor(x / this.tsize);
+        var row = Math.floor(y / this.tsize);
+        return this.solid[row * map.cols + col];
+    },
+    getCol: function (x) {
+        return Math.floor(x / this.tsize);
+    },
+    getRow: function (y) {
+        return Math.floor(y / this.tsize);
+    },
+    getX: function (col) {
+        return col * this.tsize;
+    },
+    getY: function (row) {
+        return row * this.tsize;
     }
 };
 
@@ -232,20 +296,141 @@ function Camera(map, width, height) {
     this.maxY = map.rows * map.tsize - height;
 }
 
-Camera.SPEED = 256; // pixels per second
+Camera.prototype.follow = function (sprite) {
+    this.following = sprite;
+    sprite.screenX = 0;
+    sprite.screenY = 0;
+};
 
-Camera.prototype.move = function (delta, dirx, diry) {
-    // move camera
-    this.x += dirx * Camera.SPEED * delta;
-    this.y += diry * Camera.SPEED * delta;
+Camera.prototype.update = function () {
+    // assume followed sprite should be placed at the center of the screen
+    // whenever possible
+    this.following.screenX = this.width / 2;
+    this.following.screenY = this.height / 2;
+
+    // make the camera follow the sprite
+    this.x = this.following.x - this.width / 2;
+    this.y = this.following.y - this.height / 2;
     // clamp values
     this.x = Math.max(0, Math.min(this.x, this.maxX));
     this.y = Math.max(0, Math.min(this.y, this.maxY));
+
+    // in map corners, the sprite cannot be placed in the center of the screen
+    // and we have to change its screen coordinates
+
+    // left and right sides
+    if (this.following.x < this.width / 2 ||
+        this.following.x > this.maxX + this.width / 2) {
+        this.following.screenX = this.following.x - this.x;
+    }
+    // top and bottom sides
+    if (this.following.y < this.height / 2 ||
+        this.following.y > this.maxY + this.height / 2) {
+        this.following.screenY = this.following.y - this.y;
+    }
+};
+
+function Hero(map, x, y) {
+    this.map = map;
+    this.x = x;
+    this.y = y;
+    this.width = map.tsize;
+    this.height = map.tsize;
+
+    this.image = Loader.getImage('hero');
+}
+
+Hero.SPEED = 256; // pixels per second
+
+Hero.prototype.move = function (delta, dirx, diry) {
+    // move hero
+    this.x += dirx * Hero.SPEED * delta;
+    this.y += diry * Hero.SPEED * delta;
+
+    // check if we walked into a non-walkable tile
+    this._collide(dirx, diry);
+
+    // clamp values
+    var maxX = this.map.cols * this.map.tsize;
+    var maxY = this.map.rows * this.map.tsize;
+    this.x = Math.max(0, Math.min(this.x, maxX));
+    this.y = Math.max(0, Math.min(this.y, maxY));
+};
+
+Hero.prototype._collide2 = function (dirx, diry) {
+    var row, col;
+    var left = this.x - this.width / 2;
+    var right = this.x + this.width / 2 - 1;
+    var top = this.y - this.height / 2;
+    var bottom = this.y + this.height / 2 - 1;
+      var buf = 0;
+    
+    // check for collisions on sprite sides
+    var collision =
+        this.map.isSolidTileAtXY(left+buf, top-buf) ||
+        this.map.isSolidTileAtXY(right-buf, top-buf) ||
+        this.map.isSolidTileAtXY(right-buf, bottom+buf) ||
+        this.map.isSolidTileAtXY(left+buf, bottom+buf);
+    if (!collision) { 
+       document.getElementById("status").innerHTML = "";
+          return; 
+    }
+    
+      document.getElementById("status").innerHTML = "Collission";
+}
+
+Hero.prototype._collide = function (dirx, diry) {
+    var row, col;
+    var left = this.x - this.width / 2;
+    var right = this.x + this.width / 2 - 1;
+    var top = this.y - this.height / 2;
+    var bottom = this.y + this.height / 2 - 1;
+
+    // check for collisions on sprite sides
+    var collLT = this.map.isSolidTileAtXY(left, top);
+    var collRT = this.map.isSolidTileAtXY(right, top);
+    var collRB = this.map.isSolidTileAtXY(right, bottom);
+    var collLB = this.map.isSolidTileAtXY(left, bottom);
+    var collision = collRT || collLT || collRB || collLB;
+    var collL = collLT && collLB;
+    var collR = collRT && collRB;
+    var collT = collLT && collRT;
+    var collB = collLB && collRB;
+        //this.map.isSolidTileAtXY(left, top) ||
+        //this.map.isSolidTileAtXY(right, top) ||
+        //this.map.isSolidTileAtXY(right, bottom) ||
+        //this.map.isSolidTileAtXY(left, bottom);
+    if (!collision) { 
+       document.getElementById("status").innerHTML = "";
+          return; 
+    }
+
+    document.getElementById("status").innerHTML = "Collission";
+
+    if (collB && diry > 0) {
+        row = this.map.getRow(bottom);
+        this.y = -this.height / 2 + this.map.getY(row);
+    }
+    else if (collT && diry < 0) {
+        row = this.map.getRow(top);
+        this.y = this.height / 2 + this.map.getY(row + 1);
+    }
+   if (collR && dirx > 0) {
+        col = this.map.getCol(right);
+        this.x = -this.width / 2 + this.map.getX(col);
+    }
+    else if (collL && dirx < 0) {
+        col = this.map.getCol(left);
+        this.x = this.width / 2 + this.map.getX(col + 1);
+    }
+
 };
 
 Game.load = function () {
     return [
         Loader.loadImage('tiles', 'tiles.png'),
+        Loader.loadImage('tiles2', 'DungeonCrawl_ProjectUtumnoTileset.png'),
+        Loader.loadImage('hero', 'character.png')
     ];
 };
 
@@ -254,19 +439,29 @@ Game.init = function () {
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
     TouchScreen.listenForEvents(
         [TouchScreen.LEFT, TouchScreen.RIGHT, TouchScreen.UP, TouchScreen.DOWN]);
-    this.tileAtlas = Loader.getImage('tiles');
-    this.camera = new Camera(map, 512, 512);
+    //this.tileAtlas = Loader.getImage('tiles');
+      //this.tileAtlasRows = 1;
+      //this.tileAtlasCols = 5;
+    this.tileAtlas = Loader.getImage('tiles2');
+      this.tileAtlasRows = 32;
+      this.tileAtlasCols = 47;
+
+    this.hero = new Hero(map, Game.width / 2, Game.height / 2);
+    this.camera = new Camera(map, Game.width, Game.height); 
+    this.camera.follow(this.hero);
 
     // create a canvas for each layer
     this.layerCanvas = map.layers.map(function () {
         var c = document.createElement('canvas');
-        c.width = 512;
-        c.height = 512;
+        c.width = Game.width;
+        c.height = Game.height;
         return c;
     });
 
     // initial draw of the map
     this._drawMap();
+    
+    this.showGrid = false;
 };
 
 Game.update = function (delta) {
@@ -284,7 +479,8 @@ Game.update = function (delta) {
        || TouchScreen.isAiming(TouchScreen.DOWN)) { diry = 1; }
 
     if (dirx !== 0 || diry !== 0) {
-        this.camera.move(delta, dirx, diry);
+        this.hero.move(delta, dirx, diry);
+        this.camera.update();
         this.hasScrolled = true;
     }
 };
@@ -297,7 +493,7 @@ Game._drawMap = function () {
 
 Game._drawLayer = function (layer) {
     var context = this.layerCanvas[layer].getContext('2d');
-    context.clearRect(0, 0, 512, 512);
+    context.clearRect(0, 0, Game.width, Game.height);
 
     var startCol = Math.floor(this.camera.x / map.tsize);
     var endCol = startCol + (this.camera.width / map.tsize);
@@ -311,11 +507,11 @@ Game._drawLayer = function (layer) {
             var tile = map.getTile(layer, c, r);
             var x = (c - startCol) * map.tsize + offsetX;
             var y = (r - startRow) * map.tsize + offsetY;
-            if (tile !== 0) { // 0 => empty tile
+            if (tile !== -1) { // -1 => empty tile
                 context.drawImage(
                     this.tileAtlas, // image
-                    (tile - 1) * map.tsize, // source x
-                    0, // source y
+                    Math.floor(tile % this.tileAtlasCols) * map.tsize, // source x
+                    Math.floor(tile/this.tileAtlasCols) * map.tsize, // source y
                     map.tsize, // source width
                     map.tsize, // source height
                     Math.round(x),  // target x
@@ -328,16 +524,55 @@ Game._drawLayer = function (layer) {
     }
 };
 
+Game._drawGrid = function () {
+      if (!this.showGrid) return;
+
+        var width = map.cols * map.tsize;
+    var height = map.rows * map.tsize;
+    var x, y;
+    for (var r = 0; r < map.rows; r++) {
+        x = - this.camera.x;
+        y = r * map.tsize - this.camera.y;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.lineTo(width, y);
+        this.ctx.stroke();
+    }
+    for (var c = 0; c < map.cols; c++) {
+        x = c * map.tsize - this.camera.x;
+        y = - this.camera.y;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.lineTo(x, height);
+        this.ctx.stroke();
+    }
+};
+
 Game.render = function () {
     // re-draw map if there has been scroll
     if (this.hasScrolled) {
         this._drawMap();
     }
 
-    // draw the map layers into game context
+    // draw the background map layer
     this.ctx.drawImage(this.layerCanvas[0], 0, 0);
+    
+    // draw main character
+    this.ctx.drawImage(
+        this.hero.image,
+        this.hero.screenX - this.hero.width / 2,
+        this.hero.screenY - this.hero.height / 2,
+        map.tsize, map.tsize);
+
+    // draw the foreground map layer
     this.ctx.drawImage(this.layerCanvas[1], 0, 0);
+    
+    this._drawGrid();
 };
+
+function toggleGrid() {
+    Game.showGrid = !(Game.showGrid);
+}
 
 </script>
 

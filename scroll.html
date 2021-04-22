@@ -4,10 +4,11 @@
 </head>
 <body>
 <div>
-<canvas id="demo" width="384" height="384"></canvas>
+<canvas id="demo" width="320" height="320"></canvas>
 </div>
 <div id="status"></div>
-<button type="button" onclick="toggleGrid()">Toggle Grid</button>
+<button type="button" onclick="Game.toggleGrid()">Toggle Grid</button>
+
 <script>
 //
 // Asset loader
@@ -84,6 +85,10 @@ Keyboard.isDown = function (keyCode) {
     return this._keys[keyCode];
 };
 
+//
+// TouchScreen
+//
+
 var TouchScreen = {};
 TouchScreen_startX = -1;
 TouchScreen_startY = -1;
@@ -153,50 +158,164 @@ TouchScreen.isAiming = function (direction) {
 };
 
 //
-// Game object
+// Camera
 //
 
-var Game = {};
+function Camera(map, width, height) {
+    this.x = 0;
+    this.y = 0;
+    this.width = width;
+    this.height = height;
+    this.maxX = map.cols * map.tsize - width;
+    this.maxY = map.rows * map.tsize - height;
+}
 
-Game.run = function (context, width, height) {
-    this.ctx = context;
-    this._previousElapsed = 0;
-      this.width = width;
-      this.height = height;
-
-    var p = this.load();
-    Promise.all(p).then(function (loaded) {
-        this.init();
-        window.requestAnimationFrame(this.tick);
-    }.bind(this));
+Camera.prototype.follow = function (sprite) {
+    this.following = sprite;
+    sprite.screenX = 0;
+    sprite.screenY = 0;
 };
 
-Game.tick = function (elapsed) {
-    window.requestAnimationFrame(this.tick);
+Camera.prototype.update = function () {
+    // assume followed sprite should be placed at the center of the screen
+    // whenever possible
+    this.following.screenX = this.width / 2;
+    this.following.screenY = this.height / 2;
 
-    // clear previous frame
-    this.ctx.clearRect(0, 0, Game.width, Game.height);
+    // make the camera follow the sprite
+    this.x = this.following.x - this.width / 2;
+    this.y = this.following.y - this.height / 2;
+    // clamp values
+    this.x = Math.max(0, Math.min(this.x, this.maxX));
+    this.y = Math.max(0, Math.min(this.y, this.maxY));
 
-    // compute delta time in seconds -- also cap it
-    var delta = (elapsed - this._previousElapsed) / 1000.0;
-    delta = Math.min(delta, 0.25); // maximum delta of 250 ms
-    this._previousElapsed = elapsed;
+    // in map corners, the sprite cannot be placed in the center of the screen
+    // and we have to change its screen coordinates
 
-    this.update(delta);
-    this.render();
-}.bind(Game);
-
-//
-// start up function
-//
-
-window.onload = function () {
-    var canvas = document.getElementById('demo');
-    var context = canvas.getContext('2d');
-
-    Game.run(context, canvas.width, canvas.height);
+    // left and right sides
+    if (this.following.x < this.width / 2 ||
+        this.following.x > this.maxX + this.width / 2) {
+        this.following.screenX = this.following.x - this.x;
+    }
+    // top and bottom sides
+    if (this.following.y < this.height / 2 ||
+        this.following.y > this.maxY + this.height / 2) {
+        this.following.screenY = this.following.y - this.y;
+    }
 };
 
+//
+// Hero
+//
+
+function Hero(map, x, y) {
+    this.map = map;
+    this.x = x;
+    this.y = y;
+    this.width = map.tsize-12;
+    this.height = map.tsize-12;
+
+    this.image = Loader.getImage('hero');
+}
+
+Hero.SPEED = 256; // pixels per second
+
+Hero.prototype.move = function (delta, dirx, diry) {
+    // move hero
+    this.x += dirx * Hero.SPEED * delta;
+    this.y += diry * Hero.SPEED * delta;
+
+    // check if we walked into a non-walkable tile
+    this._collide(dirx, diry);
+
+    // clamp values
+    var maxX = this.map.cols * this.map.tsize;
+    var maxY = this.map.rows * this.map.tsize;
+    this.x = Math.max(0, Math.min(this.x, maxX));
+    this.y = Math.max(0, Math.min(this.y, maxY));
+};
+
+Hero.prototype._collide = function (dirx, diry) {
+    var row, col;
+      var buf = 0;
+    var left = this.x - this.width / 2;
+    var right = this.x + this.width / 2 - 1;
+    var top = this.y - this.height / 2;
+    var bottom = this.y + this.height / 2 - 1;
+
+    // check for collisions on sprite sides
+    var collLT = this.map.isSolidTileAtXY(left+buf, top+buf);
+    var collRT = this.map.isSolidTileAtXY(right-buf, top+buf);
+    var collRB = this.map.isSolidTileAtXY(right-buf, bottom-buf);
+    var collLB = this.map.isSolidTileAtXY(left+buf, bottom-buf);
+    var collision = collRT || collLT || collRB || collLB;
+    var collL = collLT && collLB;
+    var collR = collRT && collRB;
+    var collT = collLT && collRT;
+    var collB = collLB && collRB;
+
+    var adjusted = false;
+    if (!collision) { 
+       document.getElementById("status").innerHTML = "";
+          return; 
+    }
+
+    document.getElementById("status").innerHTML = "Collission";
+
+    if (collB && diry > 0) {
+        row = this.map.getRow(bottom);
+        this.y = -this.height / 2 + this.map.getY(row);
+          adjusted = true;
+    }
+    else if (collT && diry < 0) {
+        row = this.map.getRow(top);
+        this.y = this.height / 2 + this.map.getY(row + 1);
+          adjusted = true;
+    }
+   if (collR && dirx > 0) {
+        col = this.map.getCol(right);
+        this.x = -this.width / 2 + this.map.getX(col);
+          adjusted = true;
+    }
+    else if (collL && dirx < 0) {
+        col = this.map.getCol(left);
+        this.x = this.width / 2 + this.map.getX(col + 1);
+          adjusted = true;
+    } 
+      if (!adjusted) {
+            // one corner of hero colliding
+            // todo
+    var collL = collLT || collLB;
+    var collR = collRT || collRB;
+    var collT = collLT || collRT;
+    var collB = collLB || collRB;
+    if (collB && diry > 0) {
+        row = this.map.getRow(bottom);
+        this.y = -this.height / 2 + this.map.getY(row);
+          adjusted = true;
+    }
+    else if (collT && diry < 0) {
+        row = this.map.getRow(top);
+        this.y = this.height / 2 + this.map.getY(row + 1);
+          adjusted = true;
+    }
+   if (collR && dirx > 0) {
+        col = this.map.getCol(right);
+        this.x = -this.width / 2 + this.map.getX(col);
+          adjusted = true;
+    }
+    else if (collL && dirx < 0) {
+        col = this.map.getCol(left);
+        this.x = this.width / 2 + this.map.getX(col + 1);
+          adjusted = true;
+    } 
+      }
+
+};
+
+//
+// Map
+//
 var map = {
     cols: 16,
     rows: 16,
@@ -287,179 +406,43 @@ var map = {
     }
 };
 
-function Camera(map, width, height) {
-    this.x = 0;
-    this.y = 0;
-    this.width = width;
-    this.height = height;
-    this.maxX = map.cols * map.tsize - width;
-    this.maxY = map.rows * map.tsize - height;
-}
 
-Camera.prototype.follow = function (sprite) {
-    this.following = sprite;
-    sprite.screenX = 0;
-    sprite.screenY = 0;
+//
+// Game object
+//
+
+var Game = {};
+
+Game.run = function (canvas) {
+    this.ctx = canvas.getContext('2d');
+    this._previousElapsed = 0;
+    this.width = canvas.width;
+    this.height = canvas.height;
+
+    var p = this.load();
+    Promise.all(p).then(function (loaded) {
+        this.init();
+        window.requestAnimationFrame(this.tick);
+    }.bind(this));
 };
 
-Camera.prototype.update = function () {
-    // assume followed sprite should be placed at the center of the screen
-    // whenever possible
-    this.following.screenX = this.width / 2;
-    this.following.screenY = this.height / 2;
+Game.tick = function (elapsed) {
+    window.requestAnimationFrame(this.tick);
 
-    // make the camera follow the sprite
-    this.x = this.following.x - this.width / 2;
-    this.y = this.following.y - this.height / 2;
-    // clamp values
-    this.x = Math.max(0, Math.min(this.x, this.maxX));
-    this.y = Math.max(0, Math.min(this.y, this.maxY));
+    // clear previous frame
+    this.ctx.clearRect(0, 0, Game.width, Game.height);
 
-    // in map corners, the sprite cannot be placed in the center of the screen
-    // and we have to change its screen coordinates
+    // compute delta time in seconds -- also cap it
+    var delta = (elapsed - this._previousElapsed) / 1000.0;
+    delta = Math.min(delta, 0.25); // maximum delta of 250 ms
+    this._previousElapsed = elapsed;
 
-    // left and right sides
-    if (this.following.x < this.width / 2 ||
-        this.following.x > this.maxX + this.width / 2) {
-        this.following.screenX = this.following.x - this.x;
-    }
-    // top and bottom sides
-    if (this.following.y < this.height / 2 ||
-        this.following.y > this.maxY + this.height / 2) {
-        this.following.screenY = this.following.y - this.y;
-    }
-};
-
-function Hero(map, x, y) {
-    this.map = map;
-    this.x = x;
-    this.y = y;
-    this.width = map.tsize-12;
-    this.height = map.tsize-12;
-
-    this.image = Loader.getImage('hero');
-}
-
-Hero.SPEED = 256; // pixels per second
-
-Hero.prototype.move = function (delta, dirx, diry) {
-    // move hero
-    this.x += dirx * Hero.SPEED * delta;
-    this.y += diry * Hero.SPEED * delta;
-
-    // check if we walked into a non-walkable tile
-    this._collide(dirx, diry);
-
-    // clamp values
-    var maxX = this.map.cols * this.map.tsize;
-    var maxY = this.map.rows * this.map.tsize;
-    this.x = Math.max(0, Math.min(this.x, maxX));
-    this.y = Math.max(0, Math.min(this.y, maxY));
-};
-
-Hero.prototype._collide2 = function (dirx, diry) {
-    var row, col;
-    var left = this.x - this.width / 2;
-    var right = this.x + this.width / 2 - 1;
-    var top = this.y - this.height / 2;
-    var bottom = this.y + this.height / 2 - 1;
-      var buf = 0;
-    
-    // check for collisions on sprite sides
-    var collision =
-        this.map.isSolidTileAtXY(left+buf, top-buf) ||
-        this.map.isSolidTileAtXY(right-buf, top-buf) ||
-        this.map.isSolidTileAtXY(right-buf, bottom+buf) ||
-        this.map.isSolidTileAtXY(left+buf, bottom+buf);
-    if (!collision) { 
-       document.getElementById("status").innerHTML = "";
-          return; 
-    }
-    
-      document.getElementById("status").innerHTML = "Collission";
-}
-
-Hero.prototype._collide = function (dirx, diry) {
-    var row, col;
-      var buf = 0;
-    var left = this.x - this.width / 2;
-    var right = this.x + this.width / 2 - 1;
-    var top = this.y - this.height / 2;
-    var bottom = this.y + this.height / 2 - 1;
-
-    // check for collisions on sprite sides
-    var collLT = this.map.isSolidTileAtXY(left+buf, top+buf);
-    var collRT = this.map.isSolidTileAtXY(right-buf, top+buf);
-    var collRB = this.map.isSolidTileAtXY(right-buf, bottom-buf);
-    var collLB = this.map.isSolidTileAtXY(left+buf, bottom-buf);
-    var collision = collRT || collLT || collRB || collLB;
-    var collL = collLT && collLB;
-    var collR = collRT && collRB;
-    var collT = collLT && collRT;
-    var collB = collLB && collRB;
-
-    var adjusted = false;
-    if (!collision) { 
-       document.getElementById("status").innerHTML = "";
-          return; 
-    }
-
-    document.getElementById("status").innerHTML = "Collission";
-
-    if (collB && diry > 0) {
-        row = this.map.getRow(bottom);
-        this.y = -this.height / 2 + this.map.getY(row);
-          adjusted = true;
-    }
-    else if (collT && diry < 0) {
-        row = this.map.getRow(top);
-        this.y = this.height / 2 + this.map.getY(row + 1);
-          adjusted = true;
-    }
-   if (collR && dirx > 0) {
-        col = this.map.getCol(right);
-        this.x = -this.width / 2 + this.map.getX(col);
-          adjusted = true;
-    }
-    else if (collL && dirx < 0) {
-        col = this.map.getCol(left);
-        this.x = this.width / 2 + this.map.getX(col + 1);
-          adjusted = true;
-    } 
-      if (!adjusted) {
-            // one corner of hero colliding
-            // todo
-    var collL = collLT || collLB;
-    var collR = collRT || collRB;
-    var collT = collLT || collRT;
-    var collB = collLB || collRB;
-    if (collB && diry > 0) {
-        row = this.map.getRow(bottom);
-        this.y = -this.height / 2 + this.map.getY(row);
-          adjusted = true;
-    }
-    else if (collT && diry < 0) {
-        row = this.map.getRow(top);
-        this.y = this.height / 2 + this.map.getY(row + 1);
-          adjusted = true;
-    }
-   if (collR && dirx > 0) {
-        col = this.map.getCol(right);
-        this.x = -this.width / 2 + this.map.getX(col);
-          adjusted = true;
-    }
-    else if (collL && dirx < 0) {
-        col = this.map.getCol(left);
-        this.x = this.width / 2 + this.map.getX(col + 1);
-          adjusted = true;
-    } 
-      }
-
-};
+    this.update(delta);
+    this.render();
+}.bind(Game);
 
 Game.load = function () {
     return [
-        Loader.loadImage('tiles', 'tiles.png'),
         Loader.loadImage('tiles2', 'DungeonCrawl_ProjectUtumnoTileset.png'),
         Loader.loadImage('hero', 'character.png')
     ];
@@ -470,9 +453,6 @@ Game.init = function () {
         [Keyboard.LEFT, Keyboard.RIGHT, Keyboard.UP, Keyboard.DOWN]);
     TouchScreen.listenForEvents(
         [TouchScreen.LEFT, TouchScreen.RIGHT, TouchScreen.UP, TouchScreen.DOWN]);
-    //this.tileAtlas = Loader.getImage('tiles');
-      //this.tileAtlasRows = 1;
-      //this.tileAtlasCols = 5;
     this.tileAtlas = Loader.getImage('tiles2');
       this.tileAtlasRows = 48;
       this.tileAtlasCols = 64;
@@ -601,9 +581,16 @@ Game.render = function () {
     this._drawGrid();
 };
 
-function toggleGrid() {
+Game.toggleGrid = function () {
     Game.showGrid = !(Game.showGrid);
 }
+
+// =============== Main functions ==========
+
+window.onload = function () {
+    var canvas = document.getElementById('demo');
+    Game.run(canvas);
+};
 
 </script>
 

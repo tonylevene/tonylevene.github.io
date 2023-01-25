@@ -1,0 +1,39 @@
+body, html {
+  padding: 0;
+  margin: 0;
+}
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(12, 1fr);
+  grid-column-gap: 5px;
+  grid-row-gap: 5px;
+  background-color: black;
+  padding: 4px;
+}
+.tile {
+  background-color: #0069b3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  padding-bottom: 4px;
+  font-size: 20px;
+  color: white;
+  line-height: 1;
+  font-family: Arial, Helvetica;
+  font-weight: bold; 
+  cursor: pointer;
+  transition: all .3s ease;
+}
+.selected {
+  background-color: lightgreen;
+  color: black !important;
+}
+.resetbutton {
+   width: 100%; 
+   font-size: 20pt; 
+   font-weight: bold; 
+   padding: 5px; 
+   background-color: lightyellow;
+}

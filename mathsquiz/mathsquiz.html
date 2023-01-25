@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maths Quiz</title>
+<style>
+body, html {
+  padding: 3px;
+  margin: 0;
+}
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  grid-column-gap: 5px;
+  grid-row-gap: 5px;
+  background-color: black;
+  padding: 4px;
+  width: 75%;
+}
+.tile {
+  background-color: #0069b3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  padding-bottom: 4px;
+  font-size: 60px;
+  color: white;
+  line-height: 2;
+  font-family: Arial, Helvetica;
+  font-weight: bold; 
+  cursor: pointer;
+  transition: all .3s ease;
+}
+.result {
+  font-size: 60px;
+  color: black;
+  font-family: Arial, Helvetica;
+  font-weight: bold; 
+}
+.feedback {
+  font-size: 60px;
+  color: black;
+  font-family: Arial, Helvetica;
+  font-weight: bold; 
+}
+.prevent-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+</style>
+<script>
+var numRows=4; 
+var numCols=3;
+var result=0;
+   let n1 = [...Array(10).keys()].sort(() => Math.random() - 0.5);
+   let n2 = [...Array(10).keys()].sort(() => Math.random() - 0.5);
+   let correct = 0;
+   let cur = 0;
+
+function setGridSizeCSS(nr,nc) {
+   numRows = nr;
+   numCols = nc;
+
+   var styles = `
+      .wrapper {
+         grid-template-columns: repeat(${numCols}, 1fr);
+         grid-template-rows: repeat(${numRows}, 1fr);
+      }
+   `;
+   var styleSheet = document.createElement("style");
+   styleSheet.type = "text/css";
+   styleSheet.innerText = styles;
+   document.head.appendChild(styleSheet);
+}
+
+function selectTile(elt) {
+   let n = parseInt(elt.getAttribute('ca_n'));
+   if (n>=0 && n<=9) {
+      result = (result * 10) + n;
+   } else if (n==-1) {
+      setupQuiz();
+   } else if (n==-2) {
+      submitAnswer(elt);
+   }
+}
+
+function submitAnswer(elt) {
+   elt = document.getElementById('feedback');
+   if (result==n1[cur]+n2[cur]) {
+      correct++;
+      elt.style.color = "green";
+      elt.innerHTML = "Correct!";
+   } else {
+      elt.style.color = "red";
+      document.getElementById('feedback').innerHTML = `Wrong! ${n1[cur]} + ${n2[cur]} = ${n1[cur] + n2[cur]}`;
+   }
+   cur++;
+   result = 0;
+   if (cur>=10) { 
+      document.getElementById('result').innerHTML = `You got ${correct} out of 10 right!`;
+   }
+   else {
+      document.getElementById('result').innerHTML = `Q${cur+1}: ${n1[cur]} + ${n2[cur]}`;
+   }
+}
+
+function createBaseGrid() {
+   const node = document.querySelector('.tile');
+   [...Array((numRows*numCols)-1)].forEach(_ => node.parentNode.insertBefore(node.cloneNode(true), node));
+}
+
+function setTileAttrs(elt, n) {
+   switch (n) {
+      case -1: elt.innerHTML = "NEW"; break;
+      case -2: elt.innerHTML = "ENTER"; break;
+      default: elt.innerHTML = `${n}`; 
+   }
+   elt.setAttribute('id', `elt${n}`);
+   elt.setAttribute('ca_n', `${n}`);
+}
+
+function setupQuiz() {
+   n1 = [...Array(10).keys()].sort(() => Math.random() - 0.5);
+   n2 = [...Array(10).keys()].sort(() => Math.random() - 0.5);
+   correct = 0;
+   cur = 0;
+   document.getElementById('result').innerHTML = `Q${cur+1}: ${n1[cur]} + ${n2[cur]}`;
+   document.getElementById('feedback').innerHTML = " ";
+}
+
+function game() {
+   var n = 0;
+   setGridSizeCSS(4,3);
+   createBaseGrid();
+   [...document.querySelectorAll('.tile')].forEach((elt) => { 
+      switch (n+1) {
+        case 10: setTileAttrs(elt, -1); break;
+        case 11: setTileAttrs(elt, 0); break;
+        case 12: setTileAttrs(elt, -2); break;
+        default: setTileAttrs(elt,n+1); break;
+      }
+      elt.addEventListener("click", ()=>{ selectTile(elt); }, false); 
+      n++;
+   });
+   setupQuiz();
+}
+</script>
+</head>
+<body>
+<center>
+<div class='wrapper'> <div class='tile prevent-select'></div> </div>
+<br/>
+<div class='feedback' id="feedback"> </div>
+<br/>
+<div class='result' id="result"> </div>
+</center>
+<script>
+   window.onload = function() { game(); } 
+</script>
+</body>
+</html>
+
